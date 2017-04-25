@@ -17,37 +17,38 @@ angular.module('dashboard.directives.ModelField', [
   'monospaced.elastic'
 ])
 
-.directive('modelFieldView', function($compile) {
-  function getTemplate(type) {
-    var template = '';
-    switch(type) {
-      default:
-        template = '<b>{{ field.label }}</b>: {{ data[field.name] }}';
-    }
-    return template;
-  }
-  return {
-    restrict: 'E',
-    scope: {
-      key: '=key',
-      model: '=model',
-      data: '=ngModel'
-    },
-    link: function(scope, element, attrs) {
-        element.html(getTemplate(scope.field.type)).show();
-        $compile(element.contents())(scope);
-    }
-  };
-})
+    .directive('modelFieldView', function($compile) {
+      function getTemplate(type) {
+        var template = '';
+        switch(type) {
+          default:
+            template = '<b>{{ field.label }}</b>: {{ data[field.name] }}';
+        }
+        return template;
+      }
+      return {
+        restrict: 'E',
+        scope: {
+          key: '=key',
+          model: '=model',
+          data: '=ngModel'
+        },
+        link: function(scope, element, attrs) {
+          element.html(getTemplate(scope.field.type)).show();
+          $compile(element.contents())(scope);
+        }
+      };
+    })
 
-.directive('modelFieldEdit', function($compile, $cookies) {
-  function getTemplate(type, scope) {
-    var template = '';
-    switch(type) {
-      case 'reference':
-        // depends on directive modelFieldReferenceEdit
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
+    .directive('modelFieldEdit', function($compile, $cookies, $timeout) {
+      function getTemplate(type, scope) {
+        var template = '';
+        switch(type) {
+          case 'reference':
+            // depends on directive modelFieldReferenceEdit
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
           <div class="col-sm-10"> \
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-reference-edit key="key" property="property" options="display.options" model-data="data" ng-model="data[key]" class="field" ng-required="{{ model.properties[key].required }}" ng-disabled="display.readonly"  /> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div> \
@@ -55,11 +56,12 @@ angular.module('dashboard.directives.ModelField', [
           <div class="col-sm-10"> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'reference-sort':
-        // depends on directive modelFieldReferenceSortEdit
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
+            break;
+          case 'reference-sort':
+            // depends on directive modelFieldReferenceSortEdit
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
           <div class="col-sm-10"> \
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-reference-sort-edit key="key" property="property" options="display.options" model-data="data" ng-model="data[key]" class="field" ng-required="{{ model.properties[key].required }}" ng-disabled="display.readonly"  /> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div> \
@@ -67,11 +69,12 @@ angular.module('dashboard.directives.ModelField', [
           <div class="col-sm-10"> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'list':
-        // depends on directive modelFieldListEdit
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
+            break;
+          case 'list':
+            // depends on directive modelFieldListEdit
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
           <div class="col-sm-10"> \
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-list-edit key="key" property="property" options="display.options" model-data="data" ng-model="data[key]" class="field" ng-required="{{ model.properties[key].required }}" ng-disabled="display.readonly"  /> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div> \
@@ -79,11 +82,12 @@ angular.module('dashboard.directives.ModelField', [
           <div class="col-sm-10"> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'file':
-        // depends on directive modelFieldFileEdit
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
+            break;
+          case 'file':
+            // depends on directive modelFieldFileEdit
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
           <div class="col-sm-10"> \
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-file-edit key="key" options="display.options" ng-disabled="display.readonly" model-data="data" ng-model="data[key]" class="field" /> \
           </div> \
           <br /> \
@@ -91,32 +95,38 @@ angular.module('dashboard.directives.ModelField', [
           <div class="col-sm-10"> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'image':
-        // depends on directive modelFieldImageEdit
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
+            break;
+          case 'image':
+            // depends on directive modelFieldImageEdit
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
           <div class="col-sm-10"> \
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-image-edit key="key" options="display.options" ng-disabled="display.readonly" model-data="data" ng-model="data[key]" class="field" /> \
           </div>\
           <label class="col-sm-2 control-label"></label> \
           <div class="col-sm-10"> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'video':
-        // depends on directive modelFieldImageEdit
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
+            break;
+          case 'video':
+            // depends on directive modelFieldImageEdit
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
           <div class="col-sm-10"> \
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-video-edit key="key" options="display.options" ng-disabled="display.readonly" model-data="data" ng-model="data[key]" class="field" /> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'datetime':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
+            break;
+          case 'datetime':
+          case 'dateonly':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label> \
           <div class="col-sm-10"> \
+            <div class="error-message" >{{ display.error }}</div>\
             <p class="date-picker input-group"> \
               <input type="text" class="form-control" \
-              control="dateControl"\
+              control="dateControl" \
+              min="{{ display.min }}" \
+              max="{{ display.max }}" \
               ng-model="data[key]" \
               default-date="{{data[key]}}" \
               ng-format="display.options.format" \
@@ -131,306 +141,427 @@ angular.module('dashboard.directives.ModelField', [
             </p> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        //<model-field-datetime-edit options="field.options" ng-model="data[field.name]" class="field" /> \
-        break;
-      case 'multi-select':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            //<model-field-datetime-edit options="field.options" ng-model="data[field.name]" class="field" /> \
+            break;
+          case 'multi-select':
+            // means array of results - answers stored as values and not keys - need to extra keys
+            if (Array.isArray(scope.multiSelectOptions)) {
+              var newMultiSelectOptions = scope.multiSelectOptions.slice();
+              scope.multiSelectOptions = {}
+              for (var i = 0; i < newMultiSelectOptions.length; i++) {
+                var option = newMultiSelectOptions[i];
+                for (var key in scope.display.options) {
+                  if (key === option) {
+                    scope.multiSelectOptions[key] = true;
+                  }
+                }
+              }
+            }
+            var ngOptions = '(value, text) in display.options';
+            if (scope.property.display.options instanceof Array) {
+              //Handle when options is a an array vs key/value pair
+              ngOptions = 'text in display.options';
+            }
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10 multi-select">\
+            <div class="error-message" >{{ display.error }}</div>\
             <div class="select-item checkbox-container" ng-repeat="(itemKey, itemValue) in display.options">\
               <input type="checkbox" class="field" ng-attr-id="{{key+\'-\'+itemKey}}" ng-model="multiSelectOptions[itemKey]" ng-checked="multiSelectOptions[itemKey]" ng-disabled="{{ display.readonly }}" ng-change="clickMultiSelectCheckbox(key, itemKey, itemValue, multiSelectOptions)">\
               <label class="checkbox-label" ng-attr-for="{{key+\'-\'+itemKey}}">{{ itemValue }}</label>\
             </div>\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'select':
-        var ngOptions = 'key as value for (key, value) in display.options';
-        if (scope.property.display.options instanceof Array) {
-          //Handle when options is a an array vs key/value pair
-          ngOptions = 'value as value for value in display.options';
-        }
-        //NOTE: need to add empty <option> element to prevent weird AngularJS select issue when handling first selection
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            break;
+          case 'select':
+            var ngOptions = 'key as value for (key, value) in display.options';
+            if (scope.property.display.options instanceof Array) {
+              //Handle when options is array of objects - enabling orderBy and sorting - could refactor as option to pass in
+              if (typeof scope.property.display.options[0] === 'object' && !Array.isArray(scope.property.display.options[0])) {
+                ngOptions = 'item.typeKey as item.typeVal for item in display.options | orderBy: \'typeVal\''
+              } else {
+                //Handle when options is a an array vs key/value pair
+                ngOptions = 'value as value for value in display.options';
+              }
+            }
+            //NOTE: need to add empty <option> element to prevent weird AngularJS select issue when handling first selection
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
             <select ng-model="data[key]" ng-options="'+ngOptions+'" ng-required="{{ model.properties[key].required }}" class="field form-control" ng-disabled="{{ display.readonly }}"><option value=""></option></select>\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'radio':
-        var ngOptions = '(value, text) in display.options';
-        if (scope.property.display.options instanceof Array) {
-          //Handle when options is a an array vs key/value pair
-          ngOptions = 'text in display.options';
-        }
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
-          <div class="col-sm-10">\
-            <label ng-repeat="'+ngOptions+'" class="radio"><input type="radio" ng-model="data[key]" ng-value="value || text" ng-disabled="{{ display.readonly }}" name="{{key}}"> {{text}}</label>\
+            break;
+          case 'radio':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+          <div class="col-sm-10 multi-select">\
+            <div class="error-message" >{{ display.error }}</div>\
+            <div class="select-item checkbox-container" ng-repeat="(itemKey, itemValue) in display.options">\
+              <input type="checkbox" class="field" ng-attr-id="{{key+\'-\'+itemKey}}" ng-model="singleSelectOptions[itemKey]" ng-disabled="{{ display.readonly }}" ng-click="updateSingleSelectCheckbox(itemKey, itemValue)">\
+              <label class="checkbox-label" ng-attr-for="{{key+\'-\'+itemKey}}">{{ itemValue }}</label>\
+            </div>\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'slider':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            break;
+          case 'slider':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
             <input slider ng-model="data[key]" options="display.options" class="slider ng-isolate-scope ng-valid ng-hide ng-dirty"> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'boolean':
-        template = '<div class="col-sm-2"></div> \
+            break;
+          case 'boolean':
+            template = '<div class="col-sm-2"></div> \
           <div class="col-sm-10 checkbox-container">\
+            <div class="error-message" >{{ display.error }}</div>\
             <input type="checkbox" ng-attr-id="{{key}}" ng-model="data[key]" ng-checked="check(data, key)" class="field" ng-disabled="{{ display.readonly }}">\
             <label class="checkbox-label" ng-attr-for="{{key}}">{{ display.label || key }}</label>\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'password':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            break;
+          case 'password':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10">\
-            <input type="password" ng-model="data[key]" ng-pattern="{{ display.pattern }}" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control">\
+            <div class="error-message" >{{ display.error }}</div>\
+            <input type="password" ng-model="data[key]" ng-pattern="display.pattern" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control">\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'textarea':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            break;
+          case 'textarea':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10">\
-            <textarea msd-elastic ng-model="data[key]" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control"></textarea>\
+            <div class="error-message" >{{ display.error }}</div>\
+            <textarea msd-elastic ng-model="data[key]" ng-keyup="lengthCheck($event)" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control" ng-maxlength="{{ display.maxLength }}"></textarea>\
+            <div class="model-field-tool-tip" ng-if="display.maxLength">{{ charsLeft }} characters left</div>\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'wysiwyg':
-      case 'WYSIWYG':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            break;
+          case 'wysiwyg':
+          case 'WYSIWYG':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-wysiwyg-edit key="key" property="property" options="display.options" model-data="data" ng-model="data[key]" class="field" ng-required="{{ model.properties[key].required }}" ng-disabled="display.readonly"  /> \
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'draw':
-      case 'signature':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            break;
+          case 'draw':
+          case 'signature':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-canvas-edit key="key" property="property" options="display.options" ng-model="data[key]" class="field" ng-required="{{ model.properties[key].required }}" ng-disabled="display.readonly"></model-field-canvas-edit>\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'location':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            break;
+          case 'location':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-location-edit key="key" property="property" options="display.options" ng-model="data[key]" class="field" ng-required="{{ model.properties[key].required }}" ng-disabled="display.readonly"></model-field-location-edit>\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'poi':
-      case 'POI':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+            break;
+          case 'poi':
+          case 'POI':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
           <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
             <model-field-points-of-interest-edit key="key" property="property" options="display.options" ng-model="data[key]" class="field" ng-required="{{ model.properties[key].required }}" ng-disabled="display.readonly"></model-field-points-of-interest-edit>\
             <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
           </div>';
-        break;
-      case 'number':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
-          <div class="col-sm-10">\
-            <input type="number" min="{{ display.minValue }}" ng-model="data[key]" ng-pattern="{{ display.pattern }}" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control">\
-            <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
-          </div>';
-        break;
-      case 'phoneNumber':
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
-          <div class="col-sm-10">\
-            <input type="hidden" ng-model="countrycode" value="{{ display.region }}" />\
-            <input type="text" ng-model="data[key]" phone-number country-code="countrycode" ng-pattern="{{ display.pattern }}" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control">\
-            <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
-          </div>';
-        break;
-      case 'text':
-      default:
-        template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
-          <div class="col-sm-10">\
-            <input type="text" ng-model="data[key]" ng-pattern="{{ display.pattern }}" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control">\
-            <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
-          </div>';
-    }
-    return template;
-  }
-
-  function addInputAttributes(element, inputAttr) {
-    var $input = $(element).find('input');
-    if (inputAttr && $input) {
-      for(var attr in inputAttr) {
-        $input.attr(attr, inputAttr[attr]);
-      }
-    }
-  }
-
-  return {
-    restrict: 'E',
-    scope: {
-      key: '=key',
-      model: '=model',
-      data: '=ngModel'
-    },
-    link: function(scope, element, attrs) {
-        //In situations where edit form has fields not in the model json properties object (i.e. ModelFieldReference multi-select)
-        if(scope.key !== null && typeof scope.key === 'object') {
-          if (!scope.model.properties[scope.key.property]) {
-            scope.model.properties[scope.key.property] = {};
-            scope.model.properties[scope.key.property].display = scope.key;
-          }
-          scope.key = scope.key.property;
-        } 
-        
-        var property = { display: {type: "text"} };
-        if (scope.model.properties && scope.model.properties[scope.key]) property = scope.model.properties[scope.key];
-        if (!property) {
-          console.log("ModelField link error: no property for model '" + scope.model.name + "'; property key = '" + scope.key + "' found!");
-          return; //ABORT if no property definition
-        }
-        if (!property.display || !property.display.type) {
-          if (!property.display) property.display = {};
-          //TODO: check the property definition in the loopback model and pick a better default "type"
-          switch (property.type) {
-            case "date": 
-            case "Date":
-                property.display.type = "datetime";
             break;
-            default: property.display.type = "text"; break;
+          case 'number-integer':
+          case 'number':
+          case 'number-decimal':
+            // var parseFuncString = "value = parseInt(value.replace(/[A-z.,]/, \'\'))"
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+          <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
+            <input type="number" ng-keyup="parseFunc($event)" max="{{ display.maxValue }}" min="{{ display.minValue }}" ng-model="data[key]" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control">\
+            <div class="model-field-description" ng-if="display.description">{{ display.description }} {{count}}</div>\
+          </div>';
+            break;
+          case 'phoneNumber':
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+          <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
+            <input type="hidden" ng-model="countrycode" value="{{ display.region }}" />\
+            <input type="text" ng-model="data[key]" phone-number country-code="countrycode" ng-pattern="display.pattern" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control">\
+            <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
+          </div>';
+            break;
+          case 'text':
+          default:
+            template = '<label class="col-sm-2 control-label">{{ display.label || key }}:</label>\
+          <div class="col-sm-10">\
+            <div class="error-message" >{{ display.error }}</div>\
+            <input type="text" ng-model="data[key]" ng-keyup="lengthCheck($event)" ng-pattern="display.pattern" ng-disabled="{{ display.readonly }}" ng-required="{{ model.properties[key].required }}" class="field form-control" ng-maxlength="{{ display.maxLength }}">\
+            <div class="model-field-description" ng-if="display.description">{{ display.description }}</div>\
+          </div>';
+        }
+        return template;
+      }
+
+      function addInputAttributes(element, inputAttr) {
+        var $input = $(element).find('input');
+        if (inputAttr && $input) {
+          for(var attr in inputAttr) {
+            $input.attr(attr, inputAttr[attr]);
           }
         }
+      }
 
-        if (property.display.type == 'file' && scope.data[scope.key]) {
-          //Check if image file is uploaded and convert schema property display type to image
-          var filename = scope.data[scope.key];
-          if (typeof filename === 'object' && filename.filename) filename = filename.filename;
-          else if (typeof filename === 'object' && filename.file) filename = filename.file.name;
-          if (filename) {
-            var extension = filename.toLowerCase().substring(filename.length-4);
-            if (extension == '.png' || extension == '.jpg' || extension == 'jpeg' || extension == '.bmp') {
-              property = angular.copy(property); //we don't want changes the schema property to persist outside of this directive
-              property.display.type = 'image';
+      return {
+        restrict: 'E',
+        scope: {
+          key: '=key',
+          model: '=model',
+          data: '=ngModel'
+        },
+        link: function(scope, element, attrs) {
+
+          scope.parseDecimal = function(value, scale) {console.log('value, scale', value, scale);
+            var decimalScale = parseInt(scale) || 2;
+            var value = parseFloat(value.replace(",", "."));
+            if (!isNaN(value) && typeof decimalScale === "number") {
+              value = decimalScale === 0 ? parseInt(value): value.toFixed(decimalScale);
+            }
+            return value;
+          }
+          var promise = '';
+          scope.parseFunc = function(e) {
+            if(promise) $timeout.cancel(promise);
+            promise = $timeout(function() {
+              if (scope.display.allowDecimals) {
+                e.target.value = scope.parseDecimal(e.target.value, scope.display.scaleValue);
+              } else {
+                e.target.value = parseInt(e.target.value);
+              }
+              // if (e.target.value < scope.display.minValue) e.target.value = scope.display.minValue;
+              // if (e.target.value > scope.display.maxValue) e.target.value = scope.display.maxValue;
+              if (e.target.value === 'NaN') e.target.value = scope.display.default || '';
+            }, 500);
+          };
+
+          //In situations where edit form has fields not in the model json properties object (i.e. ModelFieldReference multi-select)
+          if(scope.key !== null && typeof scope.key === 'object') {
+            if (!scope.model.properties[scope.key.property]) {
+              scope.model.properties[scope.key.property] = {};
+              scope.model.properties[scope.key.property].display = scope.key;
+            }
+            scope.key = scope.key.property;
+          }
+
+          var property = { display: {type: "text"} };
+          if (scope.model.properties && scope.model.properties[scope.key]) property = scope.model.properties[scope.key];
+          if (!property) {
+            console.log("ModelField link error: no property for model '" + scope.model.name + "'; property key = '" + scope.key + "' found!");
+            return; //ABORT if no property definition
+          }
+          if (!property.display || !property.display.type) {
+            if (!property.display) property.display = {};
+            //TODO: check the property definition in the loopback model and pick a better default "type"
+            switch (property.type) {
+              case "date":
+              case "Date":
+                property.display.type = "datetime";
+                break;
+              default: property.display.type = "text"; break;
             }
           }
-        }
 
-        //Set default date format
-        if (property.display.type == "datetime") {
-          if (!property.display.options) property.display.options = {};
-          if (!property.display.options.format) property.display.options.format = "YYYY-MM-DD  h:mm A";
-        }
-
-        if (!scope.data[scope.key] && property.display.defaultValueUsingModelKey) {
-          scope.data[scope.key] = scope.data[property.display.defaultValueUsingModelKey];
-        }
-
-        if (scope.data[scope.key] && property.display.convertToLocalTime === false) {
-          //remove the 'Z' from the end of the timestamp so that it is not converted to local time
-          scope.data[scope.key] = scope.data[scope.key].substring(0, scope.data[scope.key].length-1);
-        }
-
-        if (property.display.type == "boolean") {
-          scope.check = function(data, key) {
-            //This function is needed to accept string '1' and numeric 1 values when state changes
-            var value = data[key];
-            if (value == undefined || value == null) return property.display.default;
-            data[key] = value == '1' || value == 1; //Fixes a bug where data[key] changes from bool to string can cause checkbox to get unchecked
-            return data[key];
-          }
-          //Make sure boolean (checkbox) values are numeric (below only gets called on init and not when state changes)
-          if (typeof scope.data[scope.key] === "string") scope.data[scope.key] = parseInt(scope.data[scope.key]);
-        }
-        
-        if (property.display.type == "slider") {
-          if (typeof scope.data[scope.key] === 'undefined' || scope.data[scope.key] == null) {
-            scope.data[scope.key] = property.display.options.from + ";" + property.display.options.to;
-          }
-        }
-
-        //See if there is a default value
-        if (!scope.data[scope.key] && (property["default"] || typeof property["default"] === 'number')) {
-          scope.data[scope.key] = property["default"];
-        }
-
-        //Set multi-select output type
-        if (property.display.type == "multi-select") {
-          if (typeof property.display.output === 'undefined') {
-            property.display.output = property.display.options instanceof Array ? "comma" : "object";
-          }
-          switch (property.display.output) {
-            case "comma":
-              if (!scope.data[scope.key]) scope.data[scope.key] = "";
-              var items = scope.data[scope.key].split('","');
-              scope.multiSelectOptions = {};
-              for (var i in items) {
-                var item = items[i];
-                if (item[0] == '"') item = item.substring(1, item.length);
-                if (item[item.length-1] == '"') item = item.substring(0, item.length-1);
-                var index = property.display.options.indexOf(item);
-                scope.multiSelectOptions[index] = true;
+          scope.charsLeft = property.display.maxLength
+          if (property.display.type === 'text' || property.display.type === 'textarea') {
+            scope.lengthCheck = function(e) {
+              if (property.display.maxLength && e.target.value.length > property.display.maxLength) {
+                e.target.value = e.target.value.substring(0, property.display.maxLength);
               }
-              break;
-            case "array":
-              if (!scope.data[scope.key]) scope.data[scope.key] = [];
-              for (var i in scope.data[scope.key]) {
-                var index = scope.data[scope.key][i];
-                scope.multiSelectOptions[index] = true;
-              }
-              break;
-            case "object":
-              if (!scope.data[scope.key]) scope.data[scope.key] = {};
-              scope.multiSelectOptions = angular.copy(scope.data[scope.key]);
-              break;
-          }
-        }
-        
-        //Handle translating multi-select checks to scope.data[scope.key] output format
-        scope.clickMultiSelectCheckbox = function(questionKey, itemKey, itemValue, multiSelectOptions) {
-          var output = property.display.output == "array" ? [] : property.display.output == "object" ? {} : "";
-          if (property.display.output == "object") {
-            //Return Key/Value Pair
-            var keys = Object.keys(property.display.options);
-            for (var i in keys) {
-              var key = keys[i];
-              var value = property.display.options[key];
-              var selected = scope.multiSelectOptions[key];
-              if (selected) output[key] = value; //return object
-
+              scope.charsLeft = property.display.maxLength - e.target.value.length;
             }
+          }
+
+          if (property.display.type == 'file' && scope.data[scope.key]) {
+            //Check if image file is uploaded and convert schema property display type to image
+            var filename = scope.data[scope.key];
+            if (typeof filename === 'object' && filename.filename) filename = filename.filename;
+            else if (typeof filename === 'object' && filename.file) filename = filename.file.name;
+            if (filename) {
+              var extension = filename.toLowerCase().substring(filename.length-4);
+              if (extension == '.png' || extension == '.jpg' || extension == 'jpeg' || extension == '.bmp') {
+                property = angular.copy(property); //we don't want changes the schema property to persist outside of this directive
+                property.display.type = 'image';
+              }
+            }
+          }
+
+          //Set default date format
+          if (property.display.type == "datetime") {
+            if (!property.display.options) property.display.options = {};
+            if (!property.display.options.format) property.display.options.format = "YYYY-MM-DD  h:mm A";
+          }
+
+          if (!scope.data[scope.key] && property.display.defaultValueUsingModelKey) {
+            scope.data[scope.key] = scope.data[property.display.defaultValueUsingModelKey];
+          }
+
+          if (scope.data[scope.key] && property.display.convertToLocalTime === false) {
+            //remove the 'Z' from the end of the timestamp so that it is not converted to local time
+            scope.data[scope.key] = scope.data[scope.key].substring(0, scope.data[scope.key].length-1);
+          }
+
+          if (property.display.type == "boolean") {
+            scope.check = function(data, key) {
+              //This function is needed to accept string '1' and numeric 1 values when state changes
+              var value = data[key];
+              if (value == undefined || value == null) return property.display.default;
+              data[key] = value == '1' || value == 1; //Fixes a bug where data[key] changes from bool to string can cause checkbox to get unchecked
+              return data[key];
+            }
+            //Make sure boolean (checkbox) values are numeric (below only gets called on init and not when state changes)
+            if (typeof scope.data[scope.key] === "string") scope.data[scope.key] = parseInt(scope.data[scope.key]);
+          }
+
+          if (property.display.type == "slider") {
+            if (typeof scope.data[scope.key] === 'undefined' || scope.data[scope.key] == null) {
+              scope.data[scope.key] = property.display.options.from + ";" + property.display.options.to;
+            }
+          }
+          if (property.display.type == "textarea") {
+            if(property.display.selectone) {
+              scope.data[scope.key] = property.display.options.join("\n");
+            }
+          }
+
+          //See if there is a default value
+          if (!scope.data[scope.key] && (property["default"] || typeof property["default"] === 'number')) {
+            scope.data[scope.key] = property["default"];
+          }
+
+          //Set multi-select output type
+          if (property.display.type == "multi-select") {
+            if (typeof property.display.output === 'undefined') {
+              property.display.output = property.display.options instanceof Array ? "comma" : "object";
+            }
+            switch (property.display.output) {
+              case "comma":
+                if (!scope.data[scope.key]) scope.data[scope.key] = "";
+                var items = scope.data[scope.key].split('","');
+                scope.multiSelectOptions = {};
+                for (var i in items) {
+                  var item = items[i];
+                  if (item[0] == '"') item = item.substring(1, item.length);
+                  if (item[item.length-1] == '"') item = item.substring(0, item.length-1);
+                  var index = property.display.options.indexOf(item);
+                  scope.multiSelectOptions[index] = true;
+                }
+                break;
+              case "array":
+                if (!scope.data[scope.key]) scope.data[scope.key] = [];
+                for (var i in scope.data[scope.key]) {
+                  var index = scope.data[scope.key][i];
+                  scope.multiSelectOptions[index] = true;
+                }
+                break;
+              case "object":
+                if (!scope.data[scope.key]) scope.data[scope.key] = {};
+                scope.multiSelectOptions = angular.copy(scope.data[scope.key]);
+                try {
+                  scope.multiSelectOptions = angular.fromJson(scope.multiSelectOptions);
+                  if (typeof scope.multiSelectOptions === 'object' && !Array.isArray(scope.multiSelectOptions)) {
+                    for (var key in scope.multiSelectOptions) {
+                      scope.multiSelectOptions[key] = true;
+                    }
+                  }
+                } catch(e) {
+                }
+                break;
+            }
+          }
+
+          if(property.display.type == "radio" || property.display.type == "multi-yes-no" || property.display.type == "multi-true-false") {
+            if (!scope.data[scope.key]) scope.data[scope.key] = "";
+            scope.singleSelectOptions = {};
+
+            var selected = scope.data[scope.key];
+            angular.forEach(property.display.options, function(key, value) {
+              var choice = property.display.type == "radio" ? value : key;
+              if(choice == selected) {
+                scope.singleSelectOptions[choice] = true;
+              } else {
+                scope.singleSelectOptions[choice] = false;
+              }
+            });
+          }
+
+          scope.updateSingleSelectCheckbox = function(itemKey, itemValue) {
+            scope.singleSelectOptions[itemKey] = true;
+            scope.data[scope.key] = itemKey;
+            angular.forEach(scope.singleSelectOptions, function(value, index) {
+              if (itemKey != index)
+                scope.singleSelectOptions[index] = false;
+            });
+          }
+
+          //Handle translating multi-select checks to scope.data[scope.key] output format
+          scope.clickMultiSelectCheckbox = function(questionKey, itemKey, itemValue, multiSelectOptions) {
+            var output = property.display.output == "array" ? [] : property.display.output == "object" ? {} : "";
+            if (property.display.output == "object") {
+              //Return Key/Value Pair
+              var keys = Object.keys(property.display.options);
+              for (var i in keys) {
+                var key = keys[i];
+                var value = property.display.options[key];
+                var selected = scope.multiSelectOptions[key];
+                // if currently selected
+                if (selected) {
+                  output[key] = value
+                } else {
+                  delete output[key]
+                } ; //return object
+              }
+            } else {
+              //Results are always in order of property.display.options
+              for (var i = 0; i < property.display.options.length; i++) {
+                var value = property.display.options[i];
+                var selected = scope.multiSelectOptions[i];
+                switch (property.display.output) {
+                  case "comma":
+                    if (selected) output += "\"" + value + "\","; //quote qualified
+                    break;
+                  case "array":
+                    if (selected) output.push(i); // return array of selected indexes in order
+                    break;
+                }
+              }
+              if (property.display.output == "comma" && output.length > 0) output = output.substring(0, output.length-1); //remove last comma
+            }
+            scope.data[scope.key] = output;
+            scope.$emit('onModelFieldMultiSelectCheckboxClick', questionKey, itemKey, itemValue, multiSelectOptions);
+          };
+
+          //scope variables needed for the HTML Template
+          scope.property = property;
+          scope.display = property.display;
+
+          if (property.display.editTemplate) {
+            element.html(property.display.editTemplate).show();
           } else {
-            //Results are always in order of property.display.options
-            for (var i = 0; i < property.display.options.length; i++) {
-              var value = property.display.options[i];
-              var selected = scope.multiSelectOptions[i];
-              switch (property.display.output) {
-                case "comma":
-                  if (selected) output += "\"" + value + "\","; //quote qualified
-                  break;
-                case "array":
-                  if (selected) output.push(i); // return array of selected indexes in order
-                  break;
-              }
-            }
-            if (property.display.output == "comma" && output.length > 0) output = output.substring(0, output.length-1); //remove last comma
+            element.html(getTemplate(property.display.type, scope)).show();
           }
-          scope.data[scope.key] = output;
-          scope.$emit('onModelFieldMultiSelectCheckboxClick', questionKey, itemKey, itemValue, multiSelectOptions);
-        };
+          // add input attributes if specified in schema
+          addInputAttributes(element, scope.property.display.inputAttr);
 
-        //scope variables needed for the HTML Template
-        scope.property = property;
-        scope.display = property.display;
+          if (scope.display.pattern && scope.display.pattern[0] == '/' && scope.display.pattern[scope.display.pattern.length-1] == '/') {
+            //As of Angular 1.6 upgrade ng-pattern does not accept leading and trailing / in string regex; angular uses new RegExp() which does not accept / characters
+            scope.display.pattern = scope.display.pattern.slice(1, scope.display.pattern.length-2);
+          }
 
-        if (property.display.editTemplate) {
-          element.html(property.display.editTemplate).show();
-        } else {
-          element.html(getTemplate(property.display.type, scope)).show();
+          $compile(element.contents())(scope);
+
         }
-        // add input attributes if specified in schema
-        addInputAttributes(element, scope.property.display.inputAttr);
-
-        $compile(element.contents())(scope);
-
-    }
-  };
-})
+      };
+    })
 
 ;
+s
